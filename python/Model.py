@@ -99,7 +99,12 @@ class Model:
             if self.waves[row, col, i]:
                 possible_indices.append(i)
                 sub_probs.append(self.counts[i])
-        collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
+        tot = int(np.sum(sub_probs)) - 1
+        dist = []
+        for i in range(len(possible_indices)):
+            dist += [possible_indices[i]] * int(sub_probs[i])
+        collapsed_index = dist[randomInt.simulate(bound=tot)]
+        #collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
         self.do_observe(row, col, collapsed_index)
         self.propagate_stack.append((row, col))
 
