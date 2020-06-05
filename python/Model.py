@@ -1,6 +1,7 @@
+import qsharp
 import numpy as np
-import random
-from python import Input
+import Input
+from qrng import randomInt
 
 
 def entropy_b2(prob):
@@ -55,7 +56,9 @@ class Model:
         print(self.waves.shape)
 
     def generate_image(self):
-        row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
+        row = randomInt.simulate(bound=self.wave_shape[0] - 1)
+        col = randomInt.simulate(bound=self.wave_shape[1] - 1)
+        #row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
         iteration = 0
         while row >= 0 and col >= 0 and (self.iteration_limit<0 or iteration<self.iteration_limit):
             self.observe_wave(row, col)
