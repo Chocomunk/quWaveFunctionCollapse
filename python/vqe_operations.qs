@@ -1,4 +1,3 @@
-
 namespace variationalSolver {
 
     open Microsoft.Quantum.Canon;
@@ -83,8 +82,8 @@ namespace variationalSolver {
         let numQubits = Length(center);
         mutable rightPosFlag = true;
         mutable bottomPosFlag = true;
-        mutable conflicts = Bool[2];
-        using (qsCenter = Qubit[2*(numQubits + 1)], qsRight = Qubit[numQubits], qsBottom = Qubit[numQubits]) {
+        mutable conflicts = new Bool[2];
+        using ((qsCenter, qsRight, qsBottom) = (Qubit[2*(numQubits + 1)], Qubit[numQubits], Qubit[numQubits])) {
             let refCenterQs = qsCenter[2 .. 2*numQubits];
             let refRightQs = qsRight[0 .. numQubits];
             let refBottomQs = qsBottom[0 .. numQubits];
@@ -102,34 +101,33 @@ namespace variationalSolver {
                 // tile and the compared tile ("right" in this case)
                 // Appends a Boolean value for each check to be passed out back into the classical loss function
                 if (M(qsCenter[0]) == One){
-                    set conflicts w/ 0 <- true;
+                    set conflicts w/= 0 <- true;
                 }
                 else{
-                    set conflicts w/ 0 <- false;
+                    set conflicts w/= 0 <- false;
                 }
             }
             else{
-                set conflicts w/ 0 <- false;
+                set conflicts w/= 0 <- false;
             }
             if (Length(bottom) != 0){
                 variationalTileEntangler(qsCenter, qsBottom, true);
                 if (M(qsCenter[0]) == One){
-                    set conflicts w/ 1 <- true;
+                    set conflicts w/= 1 <- true;
                 }
                 else{
-                    set conflicts w/ 1 <- false;
+                    set conflicts w/= 1 <- false;
                 }
             }
             else{
-                set conflicts w/ 1 <- false;
+                set conflicts w/= 1 <- false;
             }
             // Reset all qubit arrays
             ResetAll(qsCenter);
             ResetAll(qsRight);
             ResetAll(qsBottom);
-            }
         }
         return conflicts;
+    }
+        
 }
-
-
