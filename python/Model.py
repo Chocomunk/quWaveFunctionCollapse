@@ -1,7 +1,10 @@
-import qsharp
 import numpy as np
+import random
 import Input
-from qrng import randomInt
+
+import qsharp
+from qrng import variationalCircuit
+from scipy.optimize import minimize
 
 
 def entropy_b2(prob):
@@ -19,6 +22,24 @@ def generate_sliding_overlay(dim):
             if i is not 0 or j is not 0:
                 _overlay.append((i, j))
     return _overlay
+
+
+def loss_function(probs, fit_table, qruns=10):
+    rows = len(probs)
+    cols = len(probs[0])
+    patts = len(probs[0][0])
+
+    loss = 0
+    for r in range(rows):
+        for c in range(cols):
+            center = probs[r][c]
+            right = probs[r][c+1] if c+1 < cols else None
+            bottom = probs[r+1][c] if r+1 < rows else None
+            res = variationalCircuit.simulate(center=center, right=right, 
+                bottom=bottom, fit_table=fit_table)
+            loss += np.sum(res)
+    print("Total Conflicts: {}".format(loss))
+    return loss
 
 
 class Model:
@@ -55,10 +76,20 @@ class Model:
         print(self.wave_shape)
         print(self.waves.shape)
 
-    def generate_image(self):
-        row = randomInt.simulate(bound=self.wave_shape[0] - 1)
-        col = randomInt.simulate(bound=self.wave_shape[1] - 1)
-        #row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
+    def generate_variational(self, qruns=10):
+        params_init = np.tile(self.probs, self.waves + (1,))
+        loss_func = lambda params: loss_function(params, self.fit_table, qruns)
+        result = minimize(loss_func, params_init, method='Nelder-Mead', 
+            options={'disp': True, 'maxiter': 20})
+        for r in range(self.wave_shape[0]):
+            for c in range(self.wave_shape[1]):
+                best_patt = np.argmax(result[r][c])
+                self.do_observe(r, c, best_patt)
+                self.render_superpositions(r, c)
+        
+
+    def generate_classical(self):
+        row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
         iteration = 0
         while row >= 0 and col >= 0 and (self.iteration_limit<0 or iteration<self.iteration_limit):
             self.observe_wave(row, col)
@@ -99,26 +130,13 @@ class Model:
             if self.waves[row, col, i]:
                 possible_indices.append(i)
                 sub_probs.append(self.counts[i])
-        tot = int(np.sum(sub_probs)) - 1
-        rand = randomInt.simulate(bound=tot)
-        j = 0
-        for i in range(len(possible_indices)):
-            if rand < sub_probs[i]:
-                j = i
-                break;
-            rand -= sub_probs[i]
-        collapsed_index = possible_indices[j]
-##        tot = int(np.sum(sub_probs)) - 1
-##        dist = []
-##        for i in range(len(possible_indices)):
-##            dist += [possible_indices[i]] * int(sub_probs[i])
-##        collapsed_index = dist[randomInt.simulate(bound=tot)]
-        #collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
+        collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
         self.do_observe(row, col, collapsed_index)
         self.propagate_stack.append((row, col))
 
     def do_observe(self, row, col, pattern_index):
         self.observed[row, col] = True
+        self.entropies[row, col] = 0
         self.waves[row, col] = np.full((self.num_patterns,), False)
         self.waves[row, col, pattern_index] = True
         # self.out_img[row:row+self.dim, col:col+self.dim] = self.patterns[pattern_index]

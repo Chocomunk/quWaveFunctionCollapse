@@ -1,10 +1,9 @@
-from python.Model import *
+from Model import *
 import cv2
 
 tile_dir = "../tiles/red"
 
-model = Model(tile_dir, (64, 64), 2, rotate_patterns=True, iteration_limit=-1)
-model.generate_image()
+model = Model(tile_dir, (8, 8), 2, rotate_patterns=True, iteration_limit=-1)
 
 if False:
     break_all = False
@@ -26,7 +25,9 @@ if False:
         if break_all:
             break
 
-result = cv2.resize(model.out_img, (800, 800), interpolation=cv2.INTER_AREA)
+model.generate_classical()
+
+result = cv2.resize(model.out_img, (256, 256), interpolation=cv2.INTER_AREA)
 cv2.imshow("result", result/255.0)
 cv2.waitKey(0)
 cv2.imwrite("{}/results/python/result.png".format(tile_dir), result)
