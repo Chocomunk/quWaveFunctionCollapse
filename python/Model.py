@@ -4,6 +4,7 @@ import Input
 
 import qsharp
 from qrng import variationalCircuit
+from qrng import randomInt
 from scipy.optimize import minimize
 
 
@@ -13,6 +14,8 @@ def entropy_b2(prob):
 
 # Top, Right, Bottom, Left
 _overlays = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+
+qrandom = False
 
 
 def generate_sliding_overlay(dim):
@@ -94,7 +97,12 @@ class Model:
         
 
     def generate_classical(self):
-        row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
+        row, col = 0, 0
+        if not qrandom:
+            row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
+        else:
+            row = randomInt.simulate(bound=self.wave_shape[0] - 1)
+            col = randomInt.simulate(bound=self.wave_shape[1] - 1)
         iteration = 0
         while row >= 0 and col >= 0 and (self.iteration_limit<0 or iteration<self.iteration_limit):
             self.observe_wave(row, col)
@@ -135,7 +143,20 @@ class Model:
             if self.waves[row, col, i]:
                 possible_indices.append(i)
                 sub_probs.append(self.counts[i])
-        collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
+
+        collapsed_index = 0
+        if not qrandom:
+            collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
+        else:
+            tot = int(np.sum(sub_probs)) - 1
+            rand = randomInt.simulate(bound=tot)
+            j = 0
+            for i, w in enumerate(sub_probs):
+                rand -= w
+                if rand < 0:
+                    j = i
+                    break
+            collapsed_index = possible_indices[j]
         self.do_observe(row, col, collapsed_index)
         self.propagate_stack.append((row, col))
 
