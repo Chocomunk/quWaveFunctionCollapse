@@ -8,7 +8,7 @@ namespace variationalSolver {
     open Microsoft.Quantum.Convert;
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Measurement;
-    
+
     // Helper Functions and Original Framework created by "Gheorghiu, Alexandru" <andrugh@caltech.edu>
 
     // return the square roots of the absolute values of the elements of an array
@@ -39,46 +39,46 @@ namespace variationalSolver {
     // Encodes the qubit array in a W state with weighted probabilities corresponding to pattern frequencies for
     // each string of Hamming length 1 (one-hot encoding)
     operation encodeState(x: Double[], qs: Qubit[]): Unit is Adj + Ctl {
-    
+
     }
-    
-    // Works exactly like encodeState except encodes the center tile as two reference qubits and two entangled 
+
+    // Works exactly like encodeState except encodes the center tile as two reference qubits and two entangled
     // copies of the same qubit array such that the right tile can be entangled with the first copy and the first
     // reference qubit and the bottom tile can be entangled with the second copy and the second reference qubit
     operation encodeStateCenter(x: Double[], qs: Qubit[]): Unit is Adj + Ctl {
-    
+
     }
 
-    
-    //  entangle matching index qubits and a corresponding reference qubit between the qubit arrays 
+
+    // entangle qubits corresponding to conflicting patterns and a corresponding reference qubit
     // to be checked using the CCNOT gate
     // tileFlag: True indicates checking with the "right" tile, False indicates checking with the "bottom" tile
     // posFlag: True indicates the compared tile exists, False indicates an edge case tile where the compared tile
     //          does not exist
-    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], tileFlag: Bool, posFlag: Bool): Unit {
+    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], tileFlag: Bool, posFlag: Bool, fit_element: Bool): Unit {
         let numQubits = Length(qs2);
         for (i in 0 .. numQubits - 1) {
             // Checks which tile is being compared to center ("right" in this case)
             if (tileFlag){
-                // Checks whether the compared ("right" in this case) tile exists 
+                // Checks whether the compared ("right" in this case) tile exists
                 // (handles edge cases on the nxn output space)
                 if (posFlag) {
-                    CCNOT(qs1[i+2], qs2[i], qs1[0]); ;   
+                    CCNOT(qs1[i+2], qs2[i], qs1[0]); ;
                 }
             }
             else {
                 if (posFlag) {
                     CCNOT(qs1[i+numQubits+2], qs2[i], qs1[1]);
-                } 
+                }
             }
         }
     }
 
     // a simple multi-qubit variational circuit
     // Center, right, bottom are probability double vectors corresponding to input tiles
-    // fit_table is a double array corresponding to the bit string input patterns
+    // fit_table describes which states are not allowed to be next to each other
     // Output: Boolean array counting number of conflicts for each 3-set of tiles passed in
-    operation variationalCircuit(center: Double[], right: Double[], bottom: Double[], fit_table: Double[]): Bool[] {
+    operation variationalCircuit(center: Double[], right: Double[], bottom: Double[], fit_table: Bool[]): Bool[] {
         let numQubits = Length(center);
         mutable rightPosFlag = true;
         mutable bottomPosFlag = true;
@@ -87,41 +87,53 @@ namespace variationalSolver {
             let refCenterQs = qsCenter[2 .. 2*numQubits];
             let refRightQs = qsRight[0 .. numQubits];
             let refBottomQs = qsBottom[0 .. numQubits];
-            
+
             // Encodes tiles into W states with appropriate weighted probabilities
             encodeStateCenter(center, refCenterQs[2*numQubits - 1 .. -1 .. 0]);
             encodeState(right, refRightQs[numQubits - 1 .. -1 .. 0]);
             encodeState(bottom, refBottomQs[numQubits - 1 .. -1 .. 0]);
-                
+
             // Edge tile cases have at least one input double array with length 0 corresponding to the missing
             // tile ("right" in this case)
             if (Length(right) != 0){
+              if (Not(fit_table[1]){
                 variationalTileEntangler(qsCenter, qsRight, true);
                 // Measure the (first) reference qubit to determine if there is any conflicts between the center
                 // tile and the compared tile ("right" in this case)
                 // Appends a Boolean value for each check to be passed out back into the classical loss function
                 if (M(qsCenter[0]) == One){
-                    set conflicts w/= 0 <- true;
+                  set conflicts w/= 0 <- true;
                 }
                 else{
-                    set conflicts w/= 0 <- false;
+                  set conflicts w/= 0 <- false;
                 }
+              }
+              else{
+                set conflicts w/= 0 <- true;
+              }
             }
             else{
                 set conflicts w/= 0 <- false;
             }
             if (Length(bottom) != 0){
+              if (Not(fit_table[2]){
                 variationalTileEntangler(qsCenter, qsBottom, true);
                 if (M(qsCenter[0]) == One){
-                    set conflicts w/= 1 <- true;
+                  set conflicts w/= 1 <- true;
                 }
                 else{
-                    set conflicts w/= 1 <- false;
+                  set conflicts w/= 1 <- false;
                 }
+              }
+              else{
+                set conflicts w/= 0 <- true;
+              }
             }
             else{
-                set conflicts w/= 1 <- false;
+              set conflicts w/= 1 <- false;
             }
+
+
             // Reset all qubit arrays
             ResetAll(qsCenter);
             ResetAll(qsRight);
@@ -129,5 +141,5 @@ namespace variationalSolver {
         }
         return conflicts;
     }
-        
+
 }
