@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  6 JUN 2020 01:14
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  6 JUN 2020 13:03
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -782,26 +782,7 @@ Package: subcaption 2016/05/22 v1.1-161 Sub-captions (AR)
 \c@subfigure=\count147
 \c@subtable=\count148
 )
-(./project.aux
-
-LaTeX Warning: Label `fig:test' multiply defined.
-
-
-LaTeX Warning: Label `fig:sub1' multiply defined.
-
-
-LaTeX Warning: Label `sub@fig:sub1' multiply defined.
-
-
-LaTeX Warning: Label `fig:sub2' multiply defined.
-
-
-LaTeX Warning: Label `sub@fig:sub2' multiply defined.
-
-
-LaTeX Warning: Label `fig:test' multiply defined.
-
-)
+(./project.aux)
 \openout1 = `project.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
@@ -818,7 +799,8 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
 LaTeX Font Info:    ... okay on input line 39.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 39.
 LaTeX Font Info:    ... okay on input line 39.
- (/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+
+(/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count149
 \scratchdimen=\dimen262
@@ -922,75 +904,75 @@ LaTeX Font Info:    Try loading font information for U+rsfs on input line 47.
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 ) [1{/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
-] [2]
-<./images/RedMaze.png, id=36, 2.70168pt x 2.70168pt>
+]
+Underfull \hbox (badness 10000) in paragraph at lines 52--57
+
+ []
+
+[2]
+<./images/RedMaze.png, id=40, 2.70168pt x 2.70168pt>
 File: ./images/RedMaze.png Graphic file (type png)
 <use ./images/RedMaze.png>
-Package pdftex.def Info: ./images/RedMaze.png  used on input line 58.
+Package pdftex.def Info: ./images/RedMaze.png  used on input line 67.
 (pdftex.def)             Requested size: 13.5083pt x 13.5083pt.
-<./images/3Bricks.png, id=37, 32.12pt x 32.12pt>
+<./images/3Bricks.png, id=41, 32.12pt x 32.12pt>
 File: ./images/3Bricks.png Graphic file (type png)
 <use ./images/3Bricks.png>
-Package pdftex.def Info: ./images/3Bricks.png  used on input line 63.
+Package pdftex.def Info: ./images/3Bricks.png  used on input line 72.
 (pdftex.def)             Requested size: 32.1199pt x 32.1199pt.
-<./images/redResultQRNG.png, id=38, 803.0pt x 803.0pt>
+ [3 <./images/RedMaze.png> <./images/3Bricks.png>]
+<./images/redResultQRNG.png, id=51, 803.0pt x 803.0pt>
 File: ./images/redResultQRNG.png Graphic file (type png)
 <use ./images/redResultQRNG.png>
-Package pdftex.def Info: ./images/redResultQRNG.png  used on input line 74.
+Package pdftex.def Info: ./images/redResultQRNG.png  used on input line 86.
 (pdftex.def)             Requested size: 176.66054pt x 176.66054pt.
-<./images/redResultClassical.png, id=39, 803.0pt x 803.0pt>
+<./images/redResultClassical.png, id=52, 803.0pt x 803.0pt>
 File: ./images/redResultClassical.png Graphic file (type png)
 <use ./images/redResultClassical.png>
-Package pdftex.def Info: ./images/redResultClassical.png  used on input line 80
+Package pdftex.def Info: ./images/redResultClassical.png  used on input line 92
 .
 (pdftex.def)             Requested size: 176.66054pt x 176.66054pt.
-<./images/bricksResultQRNG.png, id=40, 803.0pt x 803.0pt>
+<./images/bricksResultQRNG.png, id=53, 803.0pt x 803.0pt>
 File: ./images/bricksResultQRNG.png Graphic file (type png)
 <use ./images/bricksResultQRNG.png>
-Package pdftex.def Info: ./images/bricksResultQRNG.png  used on input line 91.
+Package pdftex.def Info: ./images/bricksResultQRNG.png  used on input line 103.
+
 (pdftex.def)             Requested size: 160.59715pt x 160.59715pt.
-<./images/bricksResultClassical.png, id=41, 803.0pt x 803.0pt>
+<./images/bricksResultClassical.png, id=54, 803.0pt x 803.0pt>
 File: ./images/bricksResultClassical.png Graphic file (type png)
 <use ./images/bricksResultClassical.png>
 Package pdftex.def Info: ./images/bricksResultClassical.png  used on input line
- 97.
+ 109.
 (pdftex.def)             Requested size: 160.59715pt x 160.59715pt.
-
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[3 <./images/RedMaze.png> <./images/3Bricks.png> <./images/redResultQRNG.png (P
-NG copy)> <./images/redResultClassical.png (PNG copy)>] [4 <./images/bricksResu
-ltQRNG.png (PNG copy)> <./images/bricksResultClassical.png (PNG copy)>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 109.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 109.
-
-(./project.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 109.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 109.
+ [4 <./images/redResultQRNG.png (PNG copy)> <./images/redResultClassical.png (P
+NG copy)> <./images/bricksResultQRNG.png (PNG copy)> <./images/bricksResultClas
+sical.png (PNG copy)>]
+[5]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 122.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 122.
+ (./project.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 122.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 122.
 Package rerunfilecheck Info: File `project.out' has not changed.
 (rerunfilecheck)             Checksum: 55A73F5EFAEBC1E249934915DD3E4666;185.
-
-
-LaTeX Warning: There were multiply-defined labels.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 109.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 122.
  ) 
 Here is how much of TeX's memory you used:
- 28318 strings out of 492649
- 674471 string characters out of 6129622
- 860733 words of memory out of 5000000
- 31729 multiletter control sequences out of 15000+600000
+ 28325 strings out of 492649
+ 674598 string characters out of 6129622
+ 862734 words of memory out of 5000000
+ 31735 multiletter control sequences out of 15000+600000
  6738 words of font info for 28 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 62i,11n,96p,1399b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 62i,11n,96p,1786b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 ></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><
-/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb>
-Output written on project.pdf (4 pages, 98664 bytes).
+/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></us
+r/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on project.pdf (5 pages, 110974 bytes).
 PDF statistics:
- 72 PDF objects out of 1000 (max. 8388607)
- 55 compressed objects within 1 object stream
- 13 named destinations out of 1000 (max. 500000)
+ 83 PDF objects out of 1000 (max. 8388607)
+ 64 compressed objects within 1 object stream
+ 14 named destinations out of 1000 (max. 500000)
  75 words of extra memory for PDF output out of 10000 (max. 10000000)
 
