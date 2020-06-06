@@ -79,13 +79,18 @@ class Model:
     def generate_variational(self, qruns=10):
         params_init = np.tile(self.probs, self.waves + (1,))
         loss_func = lambda params: loss_function(params, self.fit_table, qruns)
-        result = minimize(loss_func, params_init, method='Nelder-Mead', 
-            options={'disp': True, 'maxiter': 20})
-        for r in range(self.wave_shape[0]):
-            for c in range(self.wave_shape[1]):
-                best_patt = np.argmax(result[r][c])
-                self.do_observe(r, c, best_patt)
-                self.render_superpositions(r, c)
+        bound = (0, 1)
+        res = minimize(loss_func, params_init, method='L-BFGS-B', 
+            options={'disp': True, 'maxiter': 20}, bounds=bound)
+        if res.success:
+            result = res.x
+            for r in range(self.wave_shape[0]):
+                for c in range(self.wave_shape[1]):
+                    best_patt = np.argmax(result[r][c])
+                    self.do_observe(r, c, best_patt)
+                    self.render_superpositions(r, c)
+        else:
+            print("ERROR: Optimization failed!")
         
 
     def generate_classical(self):
