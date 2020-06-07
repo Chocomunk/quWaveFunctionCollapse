@@ -45,10 +45,10 @@ def loss_function(shape, probs, fit_table, qruns=10):
             bottom = probs[r+1][c] if r+1 < rows else []
             # Run the quantum circuit to get the number of conflicts for
             # a given center tile
-            res = variationalCircuitFull.simulate(center=center, right=right, 
-                bottom=bottom, fit_table=fit_table)
-            # res = variationalCircuitPartial.simulate(center=center, right=right, 
+            # res = variationalCircuitFull.simulate(center=center, right=right, 
             #     bottom=bottom, fit_table=fit_table)
+            res = variationalCircuitPartial.simulate(center=center, right=right, 
+                bottom=bottom, fit_table=fit_table)
             loss += np.sum(res)
     print("Total Conflicts: {}".format(loss))
     return loss
