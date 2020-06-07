@@ -2,7 +2,9 @@ import cv2
 import os
 import numpy as np
 
-
+# Reads in the input image using OpenCV
+# If there are multiple images, all are put into the tiles array to be
+# passed to the WFC algorithm.
 def load_tiles(dirname):
     tiles = []
     directory = os.fsencode(dirname)
