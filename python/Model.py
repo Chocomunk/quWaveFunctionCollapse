@@ -6,7 +6,7 @@ import qsharp
 from quwfc import variationalCircuit, randomInt
 from scipy.optimize import minimize
 
-
+# Calculates the entropy for a given probability
 def entropy_b2(prob):
     return -prob*np.log2(prob)
 
@@ -23,6 +23,11 @@ def generate_sliding_overlay(dim):
                 _overlay.append((i, j))
     return _overlay
 
+# Loss function for the variational approach
+# The fit table is K x K x 4 table where K is the number of states
+# The 4 dimension comes from each of the 4 adjacent state directions
+# this holds the constraints on neighboring states.
+# The probabilities for each tile being in a certain state are given in probs.
 
 def loss_function(shape, probs, fit_table, qruns=10):
     rows = shape[0]
@@ -34,11 +39,15 @@ def loss_function(shape, probs, fit_table, qruns=10):
     print(fit_table)
 
     loss = 0
+    # iterate through all possible center tiles to calculate total number of
+    # conflicts with the constraints
     for r in range(rows):
         for c in range(cols):
             center = probs[r][c]
             right = probs[r][c+1] if c+1 < cols else []
             bottom = probs[r+1][c] if r+1 < rows else []
+            # Run the quantum circuit to get the number of conflicts for
+            # a given center tile
             res = variationalCircuit.simulate(center=center, right=right, 
                 bottom=bottom, fit_table=fit_table)
             print(res)
@@ -49,6 +58,7 @@ def loss_function(shape, probs, fit_table, qruns=10):
 
 class Model:
 
+    # Initialize everything
     def __init__(self, tile_dir, output_shape, dim, rotate_patterns=False, iteration_limit=-1, overlays=_overlays):
         self.tiles = Input.load_tiles(tile_dir)
         self.img_shape = output_shape
@@ -81,11 +91,14 @@ class Model:
         print(self.wave_shape)
         print(self.waves.shape)
 
+    # Generates the output image using the variational approach
     def generate_variational(self, qruns=10):
         shape = self.wave_shape + (self.num_patterns,)
         params_init = np.tile(self.probs, self.wave_shape + (1,)).flatten()
         bounds = np.tile((0,1), (len(params_init), 1))
+        # wrapper function for our loss function
         loss_func = lambda params: loss_function(shape, params, self.fit_table.tolist(), qruns)
+        # minimizer to choose the tile probabilities with least conflicts
         res = minimize(loss_func, params_init, method='L-BFGS-B', 
             options={'disp': True, 'maxiter': 20}, bounds=bounds)
         if res.success:
@@ -98,14 +111,25 @@ class Model:
         else:
             print("ERROR: Optimization failed!")
         
-
+    # Generates the output image using the completely classical/qrng approach
+    # Flag qrng indicates whether or not we use qrng to select the initial
+    # superposition and the state to collapse
     def generate_classical(self, qrng=False):
         row, col = 0, 0
+        # Use Python's random module or not depending on flag
         if not qrng:
             row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
         else:
+            # Use quantum random number generation
             row = randomInt.simulate(bound=self.wave_shape[0] - 1)
             col = randomInt.simulate(bound=self.wave_shape[1] - 1)
+
+        # Standard WFC Loop:
+        # 1. Observe a wave and collapse its state
+        # 2. Propagate the changes throughout the board and update superposition
+        #    to only allowed states.
+        # 3. After the board state has stabilized, find the position of lowest
+        #    entropy (most likely to be observed) for the next observation.
         iteration = 0
         while row >= 0 and col >= 0 and (self.iteration_limit<0 or iteration<self.iteration_limit):
             self.observe_wave(row, col, qrng)
@@ -119,6 +143,7 @@ class Model:
             for col in range(self.wave_shape[1]):
                 self.render_superpositions(row, col)
 
+    # Determines the superposition of patterns at this position
     def render_superpositions(self, row, col):
         num_valid_patterns = sum(self.waves[row, col])
         self.out_img[row:row+self.dim, col:col+self.dim] = np.zeros((self.dim, self.dim, 3))
@@ -126,10 +151,12 @@ class Model:
             if self.waves[row, col, i]:
                 self.out_img[row:row+self.dim, col:col+self.dim] += self.patterns[i] / num_valid_patterns
 
+    # Finds the next tile of lowest entropy to collapse
     def get_lowest_entropy(self):
         lowest_val = -1
         r = -1
         c = -1
+        # Checks all non-collapsed positions to find position of lowest entropy
         for col in range(self.wave_shape[1]):
             for row in range(self.wave_shape[0]):
                 if not self.observed[row, col] and self.waves[row, col].any():
@@ -139,18 +166,26 @@ class Model:
                         c = col
         return r, c
 
+    # Performs a measurement on the tile of lowest entropy to collapse to
+    # a single state
     def observe_wave(self, row, col, qrng=False):
         possible_indices = []
         sub_probs = []
+        # Determines superposition of states and their total frequency counts.
         for i in range(self.num_patterns):
             if self.waves[row, col, i]:
                 possible_indices.append(i)
                 sub_probs.append(self.counts[i])
 
         collapsed_index = 0
+        # Uses Python's numpy.random module depending on qrng flag
+        # Randomly selects a state for collapse. Weighted by state frequency count.
         if not qrng:
             collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
         else:
+            # Use quantum random number generation to generate a random number
+            # Selects an index according to the weighted probability distribution
+            # based on this random number from qrng
             tot = int(np.sum(sub_probs)) - 1
             rand = randomInt.simulate(bound=tot)
             j = 0
@@ -160,9 +195,13 @@ class Model:
                     j = i
                     break
             collapsed_index = possible_indices[j]
+
+        # Collapse the state
         self.do_observe(row, col, collapsed_index)
+        # Add this position to those we have to propagate changes from
         self.propagate_stack.append((row, col))
 
+    # Performs the measurement
     def do_observe(self, row, col, pattern_index):
         self.observed[row, col] = True
         self.entropies[row, col] = 0
@@ -170,12 +209,16 @@ class Model:
         self.waves[row, col, pattern_index] = True
         # self.out_img[row:row+self.dim, col:col+self.dim] = self.patterns[pattern_index]
 
+    # Propagates the changes from collapsing a tile to a single state throughout
+    # the entire board.
     def propagate(self):
         iterations = 0
         while len(self.propagate_stack) > 0:
+            # Get next position we have to propagate changes from
             row, col = self.propagate_stack.pop()
             self.registered_propogate[row, col] = False
             valid_indices = []
+            # Finds valid indices where we have already observed the wave
             for i in range(self.num_patterns):
                 if self.waves[row, col, i]:
                     valid_indices.append(i)
@@ -184,6 +227,7 @@ class Model:
                 print("Error: contradiction with no valid indices")
                 continue
 
+            # Check all overlayed tiles to propagate changes
             for overlay_idx in range(len(self.overlays)):
                 self.update_wave(row, col, overlay_idx, valid_indices)
 
@@ -191,10 +235,13 @@ class Model:
             if iterations % 1000 == 0:
                 print("propagation iteration: {}, propogation stack size: {}".format(iterations, len(self.propagate_stack)))
 
+    # Actually makes the changes to the wave
     def update_wave(self, row, col, overlay_idx, valid_indices):
         col_shift, row_shift = self.overlays[overlay_idx]
         row_s = row+row_shift
         col_s = col+col_shift
+        # If position is valid and non-collapsed, propagate changes through
+        # this position
         if row_s >= 0 and row_s < self.wave_shape[0] and \
                 col_s >= 0 and col_s < self.wave_shape[1] and \
                 not self.observed[row_s, col_s]:
@@ -225,6 +272,7 @@ class Model:
     def create_waveforms(self, dim):
         height, width, depth = self.tiles[0].shape
 
+        # Add all (D x D) subarrays and (if requested) all its rotations.
         for tile in self.tiles:
             for col in range(width + 1 - dim):
                 for row in range(height + 1 - dim):

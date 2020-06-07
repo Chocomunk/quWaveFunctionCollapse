@@ -1,8 +1,10 @@
 from Model import *
 import cv2
 
+# Directory that the test images are in
 tile_dir = "../tiles/red"
 
+# Can change second argument to make ouput image larger
 model = Model(tile_dir, (4, 4), 2, rotate_patterns=True, iteration_limit=-1)
 
 if False:
@@ -25,8 +27,12 @@ if False:
         if break_all:
             break
 
+# Generates the image using the variational approach
+# Can change to model.generate_classical() with the flag for qrng to
+# change method used to generate the output image
 model.generate_variational()
 
+# Resizing and displaying output image
 result = cv2.resize(model.out_img, (256, 256), interpolation=cv2.INTER_AREA)
 cv2.imshow("result", result/255.0)
 cv2.waitKey(0)
