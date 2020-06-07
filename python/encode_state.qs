@@ -35,42 +35,28 @@ namespace variationalSolver2 {
         return BoolArrayAsInt(boolRep[numBits - 1 .. -1 .. 0]);
     }
 
-    function sum(v: Double[]) : Double {
-        let n = Length(v);
-        mutable tot = 0.0;
-        for (i in 0 .. n - 1) {
-            set tot += v[i];
-        }
-        return tot;
-    }
-
-    // Precompute a reverse-cumulative sum to figure out the relative frequency of each sublist
-    // Encodes the qubit array in a W state with weighted probabilities corresponding to pattern frequencies for
-    // each string of Hamming length 1 (one-hot encoding)
+    // Encodes the probabilities from the x array into a superposition, where
+    // the square roots of the probabilities given are the amplitudes of the 
+    // superposition
     operation encodeState(x: Double[], qs: Qubit[]) : Unit {
         let x2 = sqrtAll(x);
-        let norm = sum(x2);
-        mutable x3 = new Double[Length(x)];
-        for (i in 0 .. Length(x) - 1) {
-            set x3 w/= i <- x2[i] / norm;
-        }
-        Message($"{x3}");
-        encodeStateHelper(x3, qs);
+        encodeStateHelper(x2, qs);
     }
 
+    // Main function for encoding, this uses ideas similar to the Quantum Katas
+    // in generating the W state using controlled y rotations.
+    // This also uses trigonometry to compute the correct angle to rotate by
+    // in order for the amplitude to be correct.
     operation encodeStateHelper(x: Double[], qs: Qubit[]): Unit {
         let n = Length(x);
         mutable vals = new Double[n];
         Ry(2.0 * ArcSin(x[0]), qs[0]);
         let val = Sqrt(1.0 - PowD(x[0], 2.0));
         set vals w/= 0 <- val;
-        Message($"Val: {val}");
         for (i in 1 .. n - 1) {
             let theta = 2.0 * ArcSin(x[i] / vals[i - 1]);
-            Message($"Theta: {theta}");
             (ControlledOnInt(0, Ry(theta, _)))(qs[0 .. i - 1], qs[i]);
             let val2 = Sqrt(PowD(vals[i - 1], 2.0) - PowD(x[i], 2.0));
-            Message($"Val2: {val2}");
             set vals w/= i <- val2;
         }
     }
