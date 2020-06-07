@@ -3,7 +3,7 @@ import random
 import Input
 
 import qsharp
-from quwfc import variationalCircuit, randomInt
+from quwfc import variationalCircuitFull, variationalCircuitPartial, randomInt
 from scipy.optimize import minimize
 
 # Calculates the entropy for a given probability
@@ -19,7 +19,7 @@ def generate_sliding_overlay(dim):
     _overlay = []
     for i in range(1-dim, dim):
         for j in range(1-dim, dim):
-            if i is not 0 or j is not 0:
+            if i != 0 or j != 0:
                 _overlay.append((i, j))
     return _overlay
 
@@ -35,9 +35,6 @@ def loss_function(shape, probs, fit_table, qruns=10):
     patts = shape[2]
     probs = np.reshape(probs, shape).tolist()
 
-    print(probs)
-    print(fit_table)
-
     loss = 0
     # iterate through all possible center tiles to calculate total number of
     # conflicts with the constraints
@@ -48,10 +45,11 @@ def loss_function(shape, probs, fit_table, qruns=10):
             bottom = probs[r+1][c] if r+1 < rows else []
             # Run the quantum circuit to get the number of conflicts for
             # a given center tile
-            res = variationalCircuit.simulate(center=center, right=right, 
+            res = variationalCircuitFull.simulate(center=center, right=right, 
                 bottom=bottom, fit_table=fit_table)
-            print(res)
-            # loss += np.sum(res)
+            # res = variationalCircuitPartial.simulate(center=center, right=right, 
+            #     bottom=bottom, fit_table=fit_table)
+            loss += np.sum(res)
     print("Total Conflicts: {}".format(loss))
     return loss
 
@@ -223,7 +221,7 @@ class Model:
                 if self.waves[row, col, i]:
                     valid_indices.append(i)
 
-            if valid_indices is None or len(valid_indices) is 0:
+            if valid_indices == None or len(valid_indices) == 0:
                 print("Error: contradiction with no valid indices")
                 continue
 
