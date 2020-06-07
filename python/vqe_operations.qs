@@ -11,22 +11,22 @@ namespace quwfc {
 
     // Helper Functions and Original Framework created by "Gheorghiu, Alexandru" <andrugh@caltech.edu>
 
-    // entangle qubits corresponding to conflicting patterns and a corresponding reference qubit
-    // to be checked using the CCNOT gate
-    // tileFlag: True indicates checking with the "right" tile, False indicates checking with the "bottom" tile
-    // posFlag: True indicates the compared tile exists, False indicates an edge case tile where the compared tile
-    //          does not exist
-    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], tileFlag: Bool): Unit {
+    // entangle qubits and a corresponding reference qubit using the CCNOT gate
+    // using the fit_table array of acceptable neighboring states
+    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], fit_table: Bool[][][]): Unit {
         let numQubits = Length(qs2);
-        for (i in 0 .. numQubits - 1) {
-            // Checks which tile is being compared to center ("right" in this case)
-            if (tileFlag){
-                // Checks whether the compared ("right" in this case) tile exists
-                // (handles edge cases on the nxn output space)
-                CCNOT(qs1[i+2], qs2[i], qs1[0]);
-            } else {
-                CCNOT(qs1[i+numQubits+2], qs2[i], qs1[1]);
+        // Loops over all possible pairs of states (nxn) and entangles using the
+        // CCNOT gate if the corresponding position value in the third dimension
+        // ("right" in this case) is false
+        for (i in 0 .. numQubits - 1){
+          for (j in 0 .. numQubits - 1){
+            if (Not(fit_table[i][j][1])){
+              CCNOT(qs1[i+2], qs2[j], qs1[0]);
             }
+            elif (Not(fit_table[i][j][2])){
+              CCNOT(qs1[i+numQubits+2], qs2[j], qs1[1]);
+            }
+          }
         }
     }
 
@@ -52,35 +52,31 @@ namespace quwfc {
             // Edge tile cases have at least one input double array with length 0 corresponding to the missing
             // tile ("right" in this case)
             if (Length(right) != 0) {
-              if (not(fit_table[1])) {
-                variationalTileEntangler(qsCenter, qsRight, true);
-                // Measure the (first) reference qubit to determine if there is any conflicts between the center
-                // tile and the compared tile ("right" in this case)
-                // Appends a Boolean value for each check to be passed out back into the classical loss function
-                if (M(qsCenter[0]) == One) {
-                  set conflicts w/= 0 <- true;
-                } else {
-                  set conflicts w/= 0 <- false;
-                }
-              } else {
+              variationalTileEntangler(qsCenter, qsRight, fit_table);
+              // Measure the (first) reference qubit to determine if there is any conflicts between the center
+              // tile and the compared tile ("right" in this case)
+              // Appends a Boolean value for each check to be passed out back into the classical loss function
+              if (M(qsCenter[0]) == One) {
                 set conflicts w/= 0 <- true;
               }
-            } else {
+              else {
                 set conflicts w/= 0 <- false;
+              }
+            }
+            else {
+              set conflicts w/= 0 <- false;
             }
 
             if (Length(bottom) != 0) {
-              if (not(fit_table[2])) {
-                variationalTileEntangler(qsCenter, qsBottom, false);
-                if (M(qsCenter[0]) == One) {
-                  set conflicts w/= 1 <- true;
-                } else {
-                  set conflicts w/= 1 <- false;
-                }
-              } else {
-                set conflicts w/= 0 <- true;
+              variationalTileEntangler(qsCenter, qsBottom, fit_table);
+              if (M(qsCenter[0]) == One) {
+                set conflicts w/= 1 <- true;
               }
-            } else {
+              else {
+                set conflicts w/= 1 <- false;
+              }
+            }
+            else {
               set conflicts w/= 1 <- false;
             }
 
