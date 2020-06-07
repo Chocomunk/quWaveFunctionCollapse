@@ -76,8 +76,10 @@ namespace variationalSolver2 {
     // Works exactly like encodeState except encodes the center tile as two reference qubits and two entangled 
     // copies of the same qubit array such that the right tile can be entangled with the first copy and the first
     // reference qubit and the bottom tile can be entangled with the second copy and the second reference qubit
-    operation encodeStateCenter(x: Double[], qs: Qubit[]): Unit is Adj + Ctl {
-    
+    operation encodeStateCenter(x: Double[], qs: Qubit[]): Unit {
+        let n = Length(qs);
+        let centerQs = qs[2 .. n - 1];
+        encodeState(x, qs[2 .. n / 2]);
+        encodeState(x, qs[n / 2 + 1 .. n - 1]);
     }
-        
 }
