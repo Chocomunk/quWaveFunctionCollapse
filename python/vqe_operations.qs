@@ -1,4 +1,4 @@
-namespace variationalSolver {
+namespace quwfc {
 
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Intrinsic;
@@ -11,65 +11,21 @@ namespace variationalSolver {
 
     // Helper Functions and Original Framework created by "Gheorghiu, Alexandru" <andrugh@caltech.edu>
 
-    // return the square roots of the absolute values of the elements of an array
-    function sqrtAll(v: Double[]): Double[] {
-        let n = Length(v);
-        mutable sqrtV = new Double[n];
-        for (i in 0 .. n - 1) {
-            set sqrtV w/= i <- Sqrt(AbsD(v[i]));
-        }
-        return sqrtV;
-    }
-
-    // arccos for a fraction
-    function arccosFrac(num: Double, denom: Double): Double {
-        if (denom <= 1e-10) {
-            return 0.;
-        }
-        return ArcCos(num / denom);
-    }
-
-    // reverses the bits in n
-    function reverseBinRep(n: Int, numBits: Int): Int {
-        let boolRep = IntAsBoolArray(n, numBits);
-        return BoolArrayAsInt(boolRep[numBits - 1 .. -1 .. 0]);
-    }
-
-    // Precompute a reverse-cumulative sum to figure out the relative frequency of each sublist
-    // Encodes the qubit array in a W state with weighted probabilities corresponding to pattern frequencies for
-    // each string of Hamming length 1 (one-hot encoding)
-    operation encodeState(x: Double[], qs: Qubit[]): Unit is Adj + Ctl {
-
-    }
-
-    // Works exactly like encodeState except encodes the center tile as two reference qubits and two entangled
-    // copies of the same qubit array such that the right tile can be entangled with the first copy and the first
-    // reference qubit and the bottom tile can be entangled with the second copy and the second reference qubit
-    operation encodeStateCenter(x: Double[], qs: Qubit[]): Unit is Adj + Ctl {
-
-    }
-
-
     // entangle qubits corresponding to conflicting patterns and a corresponding reference qubit
     // to be checked using the CCNOT gate
     // tileFlag: True indicates checking with the "right" tile, False indicates checking with the "bottom" tile
     // posFlag: True indicates the compared tile exists, False indicates an edge case tile where the compared tile
     //          does not exist
-    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], tileFlag: Bool, posFlag: Bool, fit_element: Bool): Unit {
+    operation variationalTileEntangler(qs1: Qubit[], qs2: Qubit[], tileFlag: Bool): Unit {
         let numQubits = Length(qs2);
         for (i in 0 .. numQubits - 1) {
             // Checks which tile is being compared to center ("right" in this case)
             if (tileFlag){
                 // Checks whether the compared ("right" in this case) tile exists
                 // (handles edge cases on the nxn output space)
-                if (posFlag) {
-                    CCNOT(qs1[i+2], qs2[i], qs1[0]); ;
-                }
-            }
-            else {
-                if (posFlag) {
-                    CCNOT(qs1[i+numQubits+2], qs2[i], qs1[1]);
-                }
+                CCNOT(qs1[i+2], qs2[i], qs1[0]);
+            } else {
+                CCNOT(qs1[i+numQubits+2], qs2[i], qs1[1]);
             }
         }
     }
@@ -78,7 +34,7 @@ namespace variationalSolver {
     // Center, right, bottom are probability double vectors corresponding to input tiles
     // fit_table describes which states are not allowed to be next to each other
     // Output: Boolean array counting number of conflicts for each 3-set of tiles passed in
-    operation variationalCircuit(center: Double[], right: Double[], bottom: Double[], fit_table: Bool[]): Bool[] {
+    operation variationalCircuit(center: Double[], right: Double[], bottom: Double[], fit_table: Bool[][][]): Bool[] {
         let numQubits = Length(center);
         mutable rightPosFlag = true;
         mutable bottomPosFlag = true;
@@ -95,41 +51,36 @@ namespace variationalSolver {
 
             // Edge tile cases have at least one input double array with length 0 corresponding to the missing
             // tile ("right" in this case)
-            if (Length(right) != 0){
-              if (Not(fit_table[1]){
+            if (Length(right) != 0) {
+              if (not(fit_table[1])) {
                 variationalTileEntangler(qsCenter, qsRight, true);
                 // Measure the (first) reference qubit to determine if there is any conflicts between the center
                 // tile and the compared tile ("right" in this case)
                 // Appends a Boolean value for each check to be passed out back into the classical loss function
-                if (M(qsCenter[0]) == One){
+                if (M(qsCenter[0]) == One) {
                   set conflicts w/= 0 <- true;
-                }
-                else{
+                } else {
                   set conflicts w/= 0 <- false;
                 }
-              }
-              else{
+              } else {
                 set conflicts w/= 0 <- true;
               }
-            }
-            else{
+            } else {
                 set conflicts w/= 0 <- false;
             }
-            if (Length(bottom) != 0){
-              if (Not(fit_table[2]){
-                variationalTileEntangler(qsCenter, qsBottom, true);
-                if (M(qsCenter[0]) == One){
+
+            if (Length(bottom) != 0) {
+              if (not(fit_table[2])) {
+                variationalTileEntangler(qsCenter, qsBottom, false);
+                if (M(qsCenter[0]) == One) {
                   set conflicts w/= 1 <- true;
-                }
-                else{
+                } else {
                   set conflicts w/= 1 <- false;
                 }
-              }
-              else{
+              } else {
                 set conflicts w/= 0 <- true;
               }
-            }
-            else{
+            } else {
               set conflicts w/= 1 <- false;
             }
 

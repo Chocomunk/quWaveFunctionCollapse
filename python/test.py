@@ -3,7 +3,7 @@ import cv2
 
 tile_dir = "../tiles/red"
 
-model = Model(tile_dir, (8, 8), 2, rotate_patterns=True, iteration_limit=-1)
+model = Model(tile_dir, (4, 4), 2, rotate_patterns=True, iteration_limit=-1)
 
 if False:
     break_all = False
@@ -25,7 +25,7 @@ if False:
         if break_all:
             break
 
-model.generate_classical()
+model.generate_variational()
 
 result = cv2.resize(model.out_img, (256, 256), interpolation=cv2.INTER_AREA)
 cv2.imshow("result", result/255.0)

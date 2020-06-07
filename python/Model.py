@@ -3,8 +3,7 @@ import random
 import Input
 
 import qsharp
-from qrng import variationalCircuit
-from qrng import randomInt
+from quwfc import variationalCircuit, randomInt
 from scipy.optimize import minimize
 
 
@@ -14,8 +13,6 @@ def entropy_b2(prob):
 
 # Top, Right, Bottom, Left
 _overlays = [(-1, 0), (0, 1), (1, 0), (0, -1)]
-
-qrandom = False
 
 
 def generate_sliding_overlay(dim):
@@ -27,20 +24,25 @@ def generate_sliding_overlay(dim):
     return _overlay
 
 
-def loss_function(probs, fit_table, qruns=10):
-    rows = len(probs)
-    cols = len(probs[0])
-    patts = len(probs[0][0])
+def loss_function(shape, probs, fit_table, qruns=10):
+    rows = shape[0]
+    cols = shape[1]
+    patts = shape[2]
+    probs = np.reshape(probs, shape).tolist()
+
+    print(probs)
+    print(fit_table)
 
     loss = 0
     for r in range(rows):
         for c in range(cols):
             center = probs[r][c]
-            right = probs[r][c+1] if c+1 < cols else None
-            bottom = probs[r+1][c] if r+1 < rows else None
+            right = probs[r][c+1] if c+1 < cols else []
+            bottom = probs[r+1][c] if r+1 < rows else []
             res = variationalCircuit.simulate(center=center, right=right, 
                 bottom=bottom, fit_table=fit_table)
-            loss += np.sum(res)
+            print(res)
+            # loss += np.sum(res)
     print("Total Conflicts: {}".format(loss))
     return loss
 
@@ -80,11 +82,12 @@ class Model:
         print(self.waves.shape)
 
     def generate_variational(self, qruns=10):
-        params_init = np.tile(self.probs, self.waves + (1,))
-        loss_func = lambda params: loss_function(params, self.fit_table, qruns)
-        bound = (0, 1)
+        shape = self.wave_shape + (self.num_patterns,)
+        params_init = np.tile(self.probs, self.wave_shape + (1,)).flatten()
+        bounds = np.tile((0,1), (len(params_init), 1))
+        loss_func = lambda params: loss_function(shape, params, self.fit_table.tolist(), qruns)
         res = minimize(loss_func, params_init, method='L-BFGS-B', 
-            options={'disp': True, 'maxiter': 20}, bounds=bound)
+            options={'disp': True, 'maxiter': 20}, bounds=bounds)
         if res.success:
             result = res.x
             for r in range(self.wave_shape[0]):
@@ -96,16 +99,16 @@ class Model:
             print("ERROR: Optimization failed!")
         
 
-    def generate_classical(self):
+    def generate_classical(self, qrng=False):
         row, col = 0, 0
-        if not qrandom:
+        if not qrng:
             row, col = random.randint(0, self.wave_shape[0]-1), random.randint(0, self.wave_shape[1]-1)
         else:
             row = randomInt.simulate(bound=self.wave_shape[0] - 1)
             col = randomInt.simulate(bound=self.wave_shape[1] - 1)
         iteration = 0
         while row >= 0 and col >= 0 and (self.iteration_limit<0 or iteration<self.iteration_limit):
-            self.observe_wave(row, col)
+            self.observe_wave(row, col, qrng)
             self.propagate()
             row, col = self.get_lowest_entropy()
             iteration += 1
@@ -136,7 +139,7 @@ class Model:
                         c = col
         return r, c
 
-    def observe_wave(self, row, col):
+    def observe_wave(self, row, col, qrng=False):
         possible_indices = []
         sub_probs = []
         for i in range(self.num_patterns):
@@ -145,7 +148,7 @@ class Model:
                 sub_probs.append(self.counts[i])
 
         collapsed_index = 0
-        if not qrandom:
+        if not qrng:
             collapsed_index = np.random.choice(possible_indices, p=sub_probs/np.sum(sub_probs))
         else:
             tot = int(np.sum(sub_probs)) - 1

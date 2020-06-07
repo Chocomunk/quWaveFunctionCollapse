@@ -1,4 +1,4 @@
-namespace variationalSolver2 {
+namespace quwfc {
 
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Intrinsic;
